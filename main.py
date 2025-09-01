@@ -1,15 +1,13 @@
 import time
-#import RPi.GPIO as GPIO  
+import RPi.GPIO as GPIO  
 import cv2
 import numpy as np
 import os
-
 import sensors
-import conveyorbelt
+import conveyorbelt、
 import img_processing
 import classification
-import stepper_motor
-
+from stepper_motor import StepperMotorController 
 
 """
 ————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -81,6 +79,10 @@ def main():
         # 3. 进行型号分类
         model = classification.classify_model(result)
         print(f'Matched Model: {model}')
+
+        # 4. 控制步进电机转动到对应角度并复位
+        motor = StepperMotorController()
+        motor.rotate(model) # rotate是类方法，不是模块直接属性，所以要用这种方式调用（from……import）
 
     except Exception as e:
         print('Error:', e)
