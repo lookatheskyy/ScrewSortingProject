@@ -39,11 +39,11 @@ def largest_contour(mask):
     return max(contours, key=cv2.contourArea)
 
 def min_rect(contour, pixel_to_mm=1.0):
-    # 获得最小外接矩形
+    # Get the minimum enclosing rectangle 获得最小外接矩形
     rect = cv2.minAreaRect(contour)
     (cx, cy), (w, h), angle = rect
 
-    # 保证w >= h
+    # Ensure that w >= h 保证w >= h
     if h > w:
         w, h = h, w
         angle += 90
@@ -51,6 +51,7 @@ def min_rect(contour, pixel_to_mm=1.0):
     w_mm = w * pixel_to_mm
     h_mm = h * pixel_to_mm
 
+    # Simple classification basis: Nuts with a width-to-height ratio close to 1 (0.8-1.2) are classified as nuts, otherwise they are screws. 
     # 简单分类依据：螺母宽高比接近1（0.8~1.2）判为螺母 否则螺丝
     aspect = w / h if h != 0 else 0
     if 0.8 <= aspect <= 1.2:

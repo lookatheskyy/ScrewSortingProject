@@ -4,32 +4,47 @@ import cv2
 import numpy as np
 import os
 import sensors
-import conveyorbelt、
+import conveyorbelt
 import img_processing
 import classification
 from stepper_motor import StepperMotorController 
+import camera
+
+
+
+
 
 """
 ————————————————————————————————————————————————————————————————————————————————————————————————————————
 
-主函数：
-1.基本设置
-灯光常亮
 
-2.控制流程
-通电后自动启动：进料系统的电机、传送带电机、环形灯、传感器→ 传感器检测到物体→ 传送带停止建→ 获取照片并进行图像处理→ 进行分类→ 步进电机启动→ 传送带重启→ 步进电机复位（通过延时复位）
+控制流程
+step 1 ：通电后自动启动：进料系统的电机、传送带电机、环形灯、传感器→ 
+step 2 ：送入目标检测物 →
+step 3 ：传感器检测到物体→ 
+step 4 ：传送带停止→ 
+step 5 ：获取照片并进行图像处理→ 
+step 6 ：进行分类→ 
+step 7 ：步进电机启动→ 
+step 8 ：传送带重启→ 
+step 9 ：步进电机复位（通过延时复位）→
+step 10 ：回到第二步
+
 
 -------------------------------------------
+English：
+Control Flow
+Step 1: Automatically activate the feed system motor, conveyor motor, ring light, and sensor upon power-up.
+Step 2: Feed the target object.
+Step 3: Sensor detects the object.
+Step 4: Conveyor stops.
+Step 5: Capture a photo and perform image processing.
+Step 6: Classify the items.
+Step 7: Start the stepper motor.
+Step 8: Restart the conveyor.
+Step 9: Reset the stepper motor (via a timer reset).
+Step 10: Return to step 2.
 
-Main Function:
-1. Basic Settings
-Lights Always On
-Camera Resolution Settings
-
-2. Control Flow
-Automatically starts after power is turned on: feeding system motor, conveyor belt motor, ring light, sensor → 
-sensor detects object → conveyor belt stops → photo is acquired and image processed → classification is performed → 
-stepper motor starts → conveyor belt restarts → stepper motor resets (via timer reset)
 ——————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 """
@@ -60,15 +75,12 @@ def main():
 
 
     try:
-         # 1. 拍摄图片并保存
+         # 1. Take a picture and save it 拍摄图片并保存 
         image_path = camera.capture_image()
         print(f"Image captured and saved to {image_path}")
 
-        # 2. 读取图片并检测
-        
-        
+        # 2. Read the image and detect 读取图片并检测
         result = img_processing.img_recog(image_path, roi, pixel_to_mm)
-        
         print('Detection result:')
         print(f"Part type: {result['part_type']}")
         print(f"Length: {result['length_px']:.1f} px / {result['length_mm']:.2f} mm")
@@ -76,11 +88,11 @@ def main():
         print(f"Angle: {result['angle']:.1f} degrees")
         print(f"Aspect ratio: {result['aspect_ratio']:.2f}")
 
-        # 3. 进行型号分类
+        # 3. Classify 进行型号分类
         model = classification.classify_model(result)
         print(f'Matched Model: {model}')
 
-        # 4. 控制步进电机转动到对应角度并复位
+        # 4. Control the stepper motor to rotate to the corresponding angle and reset 控制步进电机转动到对应角度并复位
         motor = StepperMotorController()
         motor.rotate(model) # rotate是类方法，不是模块直接属性，所以要用这种方式调用（from……import）
 

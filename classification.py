@@ -47,13 +47,14 @@ def classify_model(detection_result):
     """
     根据检测结果字典，判断具体型号。
     使用尺寸范围字典区间匹配。
+    
     """
 
     part_type = detection_result.get('part_type')
     length = detection_result.get('length_mm')
     diameter = detection_result.get('diameter_mm')
 
-    # 定义型号判定字典
+    # Define model determination dictionary 定义型号判定字典
     model_dict = {
         'screw': [
             {'model': 'M8_20', 'diameter_range': (11, 14), 'length_range': (25, 28)},
