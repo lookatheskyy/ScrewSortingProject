@@ -1,81 +1,78 @@
 import time
-#import RPi.GPIO as GPIO  
-import cv2
-import numpy as np
-import os
-import conveyorbelt
-import img_processing
+import RPi.GPIO as GPIO  
+
+
 
 
 """
 ————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 红外线传感器函数：
-用于检测物体是否出现在camera下方。
-若出现，则传送带停止。
+检测数字高低电平即可判断是否检测到物体。
 
+型号：MH-Sensor-series Flying flash
+一般会有一个阈值电压用来判断“检测到物体”与否
+
+GPIO接线：
+VCC接3.3V或5V（建议5V供电，模块有稳压）
+GND接树莓派GND
+OUT接树莓派GPIO输入口，如GPIO17（BCM编号）
 -------------------------------------------
 
-Infrared sensor function:
-Used to detect whether an object appears under the camera.
-If so, the conveyor stops.
+
 
 ——————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 """
 
 
-
+# 假设红外传感器输出接在GPIO17
+SENSOR_PIN = 16
 
 class InfraredSensor:
-    def __init__(self, sensor_pin=16, poll_interval=0.1):  # sensor_pin=16 改为实际分配给红外传感器的GPIO口
-        self.sensor_pin = sensor_pin
-        self.poll_interval = poll_interval  # 传感器检测轮询时间(秒)
+    def __init__(self, pin=SENSOR_PIN):
+        self.pin = pin   # 传感器连接的GPIO口号，例如GPIO17
+        self.object_detected = False   # 变量，当前是否检测到物体，初始为未检测
 
-        # GPIO 初始化
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.sensor_pin, GPIO.IN)
+        GPIO.setmode(GPIO.BCM)      # 使用BCM编号
+        GPIO.setup(self.pin, GPIO.IN)   # 设置该引脚为输入模式
 
-    def wait_for_object(self):
+        # 注册GPIO事件检测（检测GPIO电平变化时调用回调函数）
+        # 监听引脚电平的上升沿或下降沿 (GPIO.BOTH)，防抖时间200ms
+        GPIO.add_event_detect(self.pin, GPIO.BOTH, callback=self._sensor_callback, bouncetime=200)
+
+    def _sensor_callback(self, channel):
         """
-        等待红外传感器检测到物体（假设检测到时GPIO为HIGH）。
-        返回后，开始处理流程。
+        这是事件检测触发时调用的回调函数，
+        参数channel是触发的GPIO引脚编号（这里就是self.pin）。
         """
-        print("等待红外传感器检测物体...")
-        try:
-            while True:
-                sensor_state = GPIO.input(self.sensor_pin)
-                if sensor_state == GPIO.HIGH:
-                    print("检测到目标物体！")
-                    return True
-                time.sleep(self.poll_interval)
-        except KeyboardInterrupt:
-            print("检测中断，清理GPIO资源")
-            GPIO.cleanup()
-            return False
+        level = GPIO.input(self.pin)
+        # 根据检测到的电平判定是否有物体
+        # 低电平（0）表示检测到物体，高电平（1）表示无物体
+        if level == 0:   # 已用万用表检测到：低电平表示有物体
+            self.object_detected = True
+        else:
+            self.object_detected = False
 
-    def run(self):
-        try:
-            while True:
-                detected = self.wait_for_object()
-                if detected:
-                    # 1 停止传送带
-                    conveyorbelt.stop_conveyor()
-                    # 2 环形灯常亮
-                    conveyorbelt.turn_on_ring_light()
-                    # 3 摄像头拍照并图像识别
-                    img_processing.capture_and_process_image()
-                    # 4 处理完成，关闭环形灯，启动传送带
-                    conveyorbelt.turn_off_ring_light()
-                    conveyorbelt.start_conveyor()
-                    print("处理完成，等待下一次检测。")
-                    # 可适当延时，防止误检
-                    time.sleep(1)
-        finally:
-            GPIO.cleanup()
-            print("GPIO清理完毕，程序退出。")
+    def is_object_detected(self):
+        """
+        外部查询接口，返回当前是否检测到物体的状态
+        """
+        return self.object_detected
+
+   
 
 
+# 测试代码
 if __name__ == "__main__":
-    sensor = InfraredSensor(sensor_pin=16)
-    sensor.run()
+    
+    sensor = InfraredSensor(SENSOR_PIN)
+    try:
+        while True:
+            if sensor.is_object_detected():
+                print("检测到物体！")
+            else:
+                print("未检测到物体")
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        sensor.cleanup()

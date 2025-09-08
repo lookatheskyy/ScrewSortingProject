@@ -90,7 +90,7 @@ class StepperMotorController:
         
         
         # Fixed direction is high level 固定方向为高电平，如需改成低电平修改下面一行
-        GPIO.output(self.DIR, GPIO.HIGH)
+        GPIO.output(self.DIR, GPIO.LOW)
 
     def angle_to_steps(self, angle):
         """Angle to step conversion 角度转为步数"""
@@ -110,13 +110,16 @@ class StepperMotorController:
         category = category if category in self.category_angle_map else 'other'
         angle = self.category_angle_map[category]
         steps_move = self.angle_to_steps(angle)
-        steps_reset = self.STEPS_PER_REV - steps_move
+        
 
         print(f"[Motor Control电机控制] category类别: {category}, Steering angle转向角度: {angle}°, Rotation steps转动步数: {steps_move}")
         self.step_motor(steps_move)
         
-        print("[Motor Control电机控制] Stay for 3 seconds停留3秒")
-        time.sleep(3)
+    def reset(self, category):
+        category = category if category in self.category_angle_map else 'other'
+        angle = self.category_angle_map[category]
+        steps_move = self.angle_to_steps(angle)
+        steps_reset = self.STEPS_PER_REV - steps_move  
         
         print("[Motor Control电机控制] Reset复位,Steps步数:", steps_reset)
         self.step_motor(steps_reset)
