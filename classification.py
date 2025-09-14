@@ -1,3 +1,5 @@
+# classification.py
+
 import time
 import cv2
 import numpy as np
@@ -57,17 +59,17 @@ def classify_model(detection_result):
     # Define model determination dictionary 定义型号判定字典
     model_dict = {
         'screw': [
-            {'model': 'M8_20', 'diameter_range': (11, 14), 'length_range': (25, 28)},
-            {'model': 'M8_40', 'diameter_range': (11, 14), 'length_range': (45, 48)},
-            {'model': 'M6_20', 'diameter_range': (9, 11), 'length_range': (22, 26)},
-            {'model': 'M6_40', 'diameter_range': (9, 11), 'length_range': (42, 46)},
-            {'model': 'M4_20', 'diameter_range': (6, 9), 'length_range': (22, 24)},
-            {'model': 'M4_40', 'diameter_range': (6, 9), 'length_range': (42, 44)},
+            {'model': 'M8_20', 'diameter_range': (7,12), 'length_range': (20, 40)},
+            {'model': 'M8_40', 'diameter_range': (7, 12), 'length_range': (40, 60)},
+            {'model': 'M6_20', 'diameter_range': (4.01, 6.99), 'length_range': (20, 30)},
+            {'model': 'M6_40', 'diameter_range': (4.01, 6.99), 'length_range': (35, 50)},
+            {'model': 'M4_20', 'diameter_range': (0, 4), 'length_range': (22, 25)},
+            {'model': 'M4_40', 'diameter_range': (0, 4.99), 'length_range': (38, 44)},
         ],
         'nut': [
-            {'model': 'M8', 'diameter_range': (12.01, 15), 'length_range': (12.01, 15)},
-            {'model': 'M6', 'diameter_range': (10, 12), 'length_range': (10, 12)},
-            {'model': 'M4', 'diameter_range': (7, 8), 'length_range': (7, 8)},
+            {'model': 'M8', 'diameter_range': (11, 15), 'length_range': (11, 15)},
+            {'model': 'M6', 'diameter_range': (9, 12), 'length_range': (9, 12)},
+            {'model': 'M4', 'diameter_range': (6, 8), 'length_range': (6, 8)},
         ]
     }
 

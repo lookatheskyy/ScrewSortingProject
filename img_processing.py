@@ -1,7 +1,7 @@
 import time
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+
 import os
 import sensors
 
@@ -130,3 +130,4 @@ def img_recog(image_path, roi, pixel_to_mm=0.035, save_steps=True, output_dir="d
         cv2.imwrite(os.path.join(output_dir, f"{roi_tag}_mask.png"), mask)
 
     return result
+

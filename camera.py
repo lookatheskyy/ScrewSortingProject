@@ -1,3 +1,5 @@
+# camera.py
+
 import cv2
 import time
 import os
@@ -23,8 +25,8 @@ Use a Raspberry Pi to control a USB camera (IMX179) to capture images and store 
 def capture_image(camera_index=0, 
                   save_dir='captured_images', 
                   filename_prefix='capture',
-                  width=1920, 
-                  height=1080):
+                  width=1280, 
+                  height=720):
     """
     Call the USB camera to capture a picture, set the resolution and save it to a folder (调用USB摄像头采集一张图片，设置分辨率并保存到文件夹)
     
@@ -50,7 +52,7 @@ def capture_image(camera_index=0,
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     
     # Capture a few frames for camera warm-up 采集几帧用于摄像头预热
-    for _ in range(10):
+    for _ in range(20):
         ret, frame = cap.read()
         if not ret:
             raise IOError("Failed to capture image from camera")
@@ -66,12 +68,6 @@ def capture_image(camera_index=0,
     
     
     
-    # Calling calibration file 调用标定文件
-    calib = CameraCalibration()
-    calib.load_calibration('camera_calib.npz')
-
-    
-
 
 
     timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -82,3 +78,4 @@ def capture_image(camera_index=0,
 
     cap.release()
     return filepath
+

@@ -53,11 +53,15 @@ LED_BRIGHTNESS = 10
 class RingLight:
     def __init__(self, count=LED_COUNT, pin=RING_LIGHT_PIN, brightness=LED_BRIGHTNESS):
         self.led_count = count
+        # 等待设备准备
+        time.sleep(1)
         self.strip = PixelStrip(count, pin, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
         self.strip.begin()
     
     def turn_on(self, color=Color(255, 255, 255)):
         """全部灯珠点亮指定颜色，默认为白色"""
+        # 点灯前短暂延时
+        time.sleep(0.5)
         for i in range(self.led_count):
             self.strip.setPixelColor(i, color)
         self.strip.show()
@@ -75,7 +79,7 @@ class RingLight:
 
 def main():
     
-    
+    time.sleep(2) # 延时2秒，确保系统和硬件驱动就绪
     GPIO.setmode(GPIO.BCM)
     
     
@@ -83,8 +87,8 @@ def main():
     sensor = sensors.InfraredSensor()
     ring_light = RingLight()
     
-    roi = (2, 395, 1911, 280)
-    pixel_to_mm = 0.05
+    roi = (380, 280, 1280, 200)
+    pixel_to_mm = 0.075
 
 
 
@@ -92,6 +96,7 @@ def main():
         # step 1: 启动进料电机、传送带、环形灯，传感器GPIO已初始化
         feedingsystem_start()
         conveyorbelt_start()
+    
         ring_light.turn_on()
         
     
@@ -134,11 +139,12 @@ def main():
             # step 8
             # 先只启动长传送带，1s后停止
             conveyorbelt._start_long()  # 直接调用模块中私有函数
-            time.sleep(1)
+            time.sleep(1.5)
             conveyorbelt._stop_long()
             
-            time.sleep(5)
+            time.sleep(3)
             motor.reset(model)
+            
             # 再同时启动进料与传送带，开启下一轮识别
             feedingsystem_start()
             conveyorbelt_start()
