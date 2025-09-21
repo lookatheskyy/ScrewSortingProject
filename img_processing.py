@@ -25,30 +25,44 @@ After receiving a photo from the camera, process it and obtain the diameter and 
 
 
 def preprocess(img, save_steps=True, output_dir="debug_steps", base_name='1'):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-    gray_clahe = clahe.apply(gray)
-    gray_blur = cv2.medianBlur(gray_clahe, 5)
+    """
+    Image Preprocessing
+    将原始图像转换成干净且容易提取轮廓的二值图像
+    
+    """
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 灰度转换
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))  #增强对比度
+    gray_clahe = clahe.apply(gray)  #增强对比度
+    gray_blur = cv2.medianBlur(gray_clahe, 5)  # 中值模糊滤波
     if save_steps and output_dir:
         os.makedirs(output_dir, exist_ok=True)
         cv2.imwrite(os.path.join(output_dir, f"{base_name}_gray.png"), gray)
-    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)   # 阈值二值化（OSTU）
     if save_steps and output_dir:
         cv2.imwrite(os.path.join(output_dir, f"{base_name}_thresh.png"), thresh)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
-    closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=10)
+    closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=10)   # 形态学闭运算和开运算去噪
     opened = cv2.morphologyEx(closed, cv2.MORPH_OPEN, kernel, iterations=1)
     if save_steps and output_dir:
         cv2.imwrite(os.path.join(output_dir, f"{base_name}_closed.png"), closed)
-        cv2.imwrite(os.path.join(output_dir, f"{base_name}_opened.png"), opened)
+        cv2.imwrite(os.path.join(output_dir, f"{base_name}_opened.png"), opened)  
     return opened
 
-def largest_contour(mask):
+
+
+"""
+Object Detection & Measurement
+
+"""
+
+# 从二值图像中找出所有轮廓，返回面积最大的轮廓，作为目标检测物的轮廓
+def largest_contour(mask):   
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not contours:
         return None
     return max(contours, key=cv2.contourArea)
 
+# 计算目标轮廓的最小外接矩形 
 def min_rect(contour, pixel_to_mm=1.0):
     # 获得最小外接矩形
     rect = cv2.minAreaRect(contour)
@@ -80,7 +94,7 @@ def min_rect(contour, pixel_to_mm=1.0):
         'aspect_ratio': aspect
     }
 
-
+ # 裁剪ROI,调用上面两个函数。
 def img_recog(image_path, roi, pixel_to_mm=0.035, save_steps=True, output_dir="debug_steps"):
     img = cv2.imread(image_path)
     if img is None:

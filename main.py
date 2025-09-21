@@ -36,7 +36,17 @@ step 10 ：回到第二步
 -------------------------------------------
 English：
 Control Flow
-
+Control Flow
+Step 1: Automatically starts upon power-on: feeder motor, conveyor belt motor, ring light, sensor →
+Step 2: Object to be inspected is fed in →
+Step 3: Sensor detects the object →
+Step 4: Feeder and conveyor belt stop →
+Step 5: Image capture and processing →
+Step 6: Classification and result determination →
+Step 7: Stepper motor starts (resets after 3 seconds) →
+Step 8: Main conveyor belt starts (stops after 1 second) →
+Step 9: Feeder and conveyor belt systems restart →
+Step 10: Return to step 2
 ——————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 """
@@ -53,10 +63,15 @@ LED_BRIGHTNESS = 10
 class RingLight:
     def __init__(self, count=LED_COUNT, pin=RING_LIGHT_PIN, brightness=LED_BRIGHTNESS):
         self.led_count = count
+        self.brightness = brightness
+        
         # 等待设备准备
         time.sleep(1)
         self.strip = PixelStrip(count, pin, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
         self.strip.begin()
+        # 显式设置亮度
+        self.strip.setBrightness(self.brightness)
+        self.strip.show()  # 使亮度设置立即生效
     
     def turn_on(self, color=Color(255, 255, 255)):
         """全部灯珠点亮指定颜色，默认为白色"""
