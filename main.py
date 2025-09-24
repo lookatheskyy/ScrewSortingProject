@@ -13,29 +13,13 @@ import camera
 
 from feeding_system import feedingsystem_start, feedingsystem_stop, feedingsystem_restart
 from conveyorbelt import conveyorbelt_start, conveyorbelt_stop, conveyorbelt_restart_1
-
+from rpi_ws281x import PixelStrip, Color
 
 
 """
 ————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
-控制流程
-step 1 ：通电后自动启动：进料系统的电机、传送带电机、环形灯、传感器→ 
-step 2 ：送入目标检测物 →
-step 3 ：传感器检测到物体→ 
-step 4 ：进料系统与传送带停止→ 
-step 5 ：获取照片并进行图像处理→ 
-step 6 ：分类并获得分类结果→ 
-step 7 ：步进电机启动（3秒后复位）→ 
-step 8 ：长传送带启动（1秒后停止）→ 
-step 9 ：进料系统与传送带系统启动→
-step 10 ：回到第二步
-
-
--------------------------------------------
-English：
-Control Flow
 Control Flow
 Step 1: Automatically starts upon power-on: feeder motor, conveyor belt motor, ring light, sensor →
 Step 2: Object to be inspected is fed in →
@@ -51,11 +35,11 @@ Step 10: Return to step 2
 
 """
 
-RING_LIGHT_PIN = 18  # 假设环形灯用GPIO18 
+RING_LIGHT_PIN = 18  
 LED_COUNT = 16
 LED_FREQ_HZ = 800000
-LED_DMA = 10              # DMA通道
-LED_INVERT = False        # 是否反转信号
+LED_DMA = 10             
+LED_INVERT = False        
 LED_BRIGHTNESS = 10
 
 
@@ -65,17 +49,16 @@ class RingLight:
         self.led_count = count
         self.brightness = brightness
         
-        # 等待设备准备
+        # stand by
         time.sleep(1)
         self.strip = PixelStrip(count, pin, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
-        self.strip.begin()
-        # 显式设置亮度
+        self.strip.begi
         self.strip.setBrightness(self.brightness)
-        self.strip.show()  # 使亮度设置立即生效
+        self.strip.show()  
     
     def turn_on(self, color=Color(255, 255, 255)):
-        """全部灯珠点亮指定颜色，默认为白色"""
-        # 点灯前短暂延时
+        """All lamp beads light up the specified color, the default is white"""
+      
         time.sleep(0.5)
         for i in range(self.led_count):
             self.strip.setPixelColor(i, color)
@@ -83,7 +66,7 @@ class RingLight:
         print("Ring light turned on.")
         
     def turn_off(self):
-        """全部灯珠关闭"""
+        """All lamp beads are turned off"""
         for i in range(self.led_count):
             self.strip.setPixelColor(i, Color(0, 0, 0))
         self.strip.show()
@@ -94,11 +77,11 @@ class RingLight:
 
 def main():
     
-    time.sleep(2) # 延时2秒，确保系统和硬件驱动就绪
+    time.sleep(2) 
     GPIO.setmode(GPIO.BCM)
     
     
-    # 初始化设备
+    # Initialize 
     sensor = sensors.InfraredSensor()
     ring_light = RingLight()
     
@@ -106,19 +89,19 @@ def main():
     pixel_to_mm = 0.075
 
 
-
+    
     try:
-        # step 1: 启动进料电机、传送带、环形灯，传感器GPIO已初始化
+        # step 1: Start the conveyor belt, ring light, and the sensor GPIO has been initialized
         feedingsystem_start()
         conveyorbelt_start()
     
         ring_light.turn_on()
         
-    
+        #
         while True:
             print("等待检测到物体...")
             
-            # step 2 & 3 & 4：循环判断传感器是否检测到物体，检测到则停止传送带和进料
+            # Step 2 & 3 & 4: Loop to determine if the sensor detects an object, and if so, stop the conveyor and feed.
             while True:
                 if sensor.is_object_detected():
                     print("检测到物体，停止进料和传送带")
@@ -130,11 +113,11 @@ def main():
                     feedingsystem_start()
                 time.sleep(0.1)
         
-            # step 5： Take a picture and save it 拍摄图片并保存 
+            # step 5： Take a picture and save it 
             image_path = camera.capture_image()
             print(f"Image captured and saved to {image_path}")
 
-            # step 6： Read the image and detect 读取图片并检测
+            # step 6： Read the image and detect 
             result = img_processing.img_recog(image_path, roi, pixel_to_mm)
             print('Detection result:')
             print(f"Part type: {result['part_type']}")
@@ -143,28 +126,28 @@ def main():
             print(f"Angle: {result['angle']:.1f} degrees")
             print(f"Aspect ratio: {result['aspect_ratio']:.2f}")
 
-            #  Classify 进行型号分类
+            #  Classify 
             model = classification.classify_model(result)
             print(f'Matched Model: {model}')
 
-            # step 7： Control the stepper motor to rotate to the corresponding angle and reset 控制步进电机转动到对应角度并复位
+            # step 7： Control the stepper motor to rotate to the corresponding angle and reset 
             motor = StepperMotorController()
-            motor.rotate(model) # rotate是类方法，不是模块直接属性，所以要用这种方式调用（from……import）
+            motor.rotate(model) 
          
             # step 8
-            # 先只启动长传送带，1s后停止
-            conveyorbelt._start_long()  # 直接调用模块中私有函数
+            # Start only the long conveyor belt and stop it after 1 second
+            conveyorbelt._start_long()  
             time.sleep(1.5)
             conveyorbelt._stop_long()
             
             time.sleep(3)
-            motor.reset(model)
+            motor.reset(model) 
             
-            # 再同时启动进料与传送带，开启下一轮识别
+            # Then start the feeding and conveyor belt at the same time to start the next round of recognition
             feedingsystem_start()
             conveyorbelt_start()
             
-            # step 10 循环回去等待传感器检测..
+            # step 10 loop back and wait for sensor detection..
             
             
     except Exception as e:
